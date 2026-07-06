@@ -36,6 +36,7 @@ class Simulator:
         self._draw_exit()
         self.car_rect = self._draw_car()
 
+        self.prev_xy = (self.car.x, self.car.y)
 
         # self.root.after(self.delay_ms, self._tick)
 
@@ -75,8 +76,28 @@ class Simulator:
         x1, y1, x2, y2 = self.grid.to_canvas_coords(self.car.x, self.car.y)
         return self.canvas.create_rectangle(x1, y1, x2, y2, fill="#1e90ff", outline="#00008b")
 
+    def _draw_move_arrow(self, old_x, old_y, new_x, new_y):
+        ox1, oy1, ox2, oy2 = self.grid.to_canvas_coords(old_x, old_y)
+        nx1, ny1, nx2, ny2 = self.grid.to_canvas_coords(new_x, new_y)
+
+
+        start_x = (ox1 + ox2) / 2
+        start_y = (oy1 + oy2) / 2
+        end_x = (nx1 + nx2) / 2
+        end_y = (ny1 + ny2) / 2
+
+        self.canvas.create_line(
+            start_x, start_y, end_x, end_y,
+            fill = "#ff6600",
+            width = 2,
+            arrow = tk.LAST,
+            arrowshape = (10, 12, 5),
+        )
+
     def _tick(self):
         if self.finished: return
+
+        old_x, old_y = self.car.x, self.car.y
 
         still_running = self.strategy.step(self.grid, self.car)
         self.step_count += 1
@@ -90,6 +111,9 @@ class Simulator:
         self.distance_label.config(text = self._distance_text())
         x1, y1, _, _ = self.grid.to_canvas_coords(self.car.x, self.car.y)
         self.canvas.moveto(self.car_rect, x1, y1)
+
+        if (self.car.x, self.car.y) != (old_x, old_y):
+            self._draw_move_arrow(old_x, old_y, self.car.x, self.car.y)
 
         if not still_running:
             self._finish()
